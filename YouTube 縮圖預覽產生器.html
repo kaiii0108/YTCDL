@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube 縮圖產生器（支援批次 & 網址）</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    .thumbnail {
+      margin-top: 2rem;
+    }
+    .thumb-box {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin-top: 0.5rem;
+      border: 1px solid #ccc;
+    }
+    .video-title {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    a {
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>YouTube 縮圖預覽產生器</h1>
+  <p>請輸入 YouTube 影片 ID、網址，或用 <code>{}</code>/<code>,</code> 分隔多筆</p>
+
+  <textarea id="inputArea" placeholder="範例：dQw4w9WgXcQ, https://youtu.be/abc12345678, {xyz111,abc222}"></textarea>
+  <br>
+  <button onclick="generateThumbnails()">產生縮圖</button>
+
+  <div id="thumbnails" class="thumbnail"></div>
+
+  <script>
+    function extractVideoId(str) {
+      // 清除多餘空白或符號
+      str = str.trim();
+
+      // 如果是完整網址，嘗試擷取 ID
+      const patterns = [
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+        /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+        /([a-zA-Z0-9_-]{11})/ // fallback
+      ];
+
+      for (const pattern of patterns) {
+        const match = str.match(pattern);
+        if (match) return match[1];
+      }
+
+      return null;
+    }
+
+    function parseInput(input) {
+      // 移除花括號並用 , 分隔
+      input = input.replace(/[{}]/g, '');
+      const parts = input.split(/[\s,]+/).filter(Boolean);
+      const ids = [];
+
+      for (const part of parts) {
+        const id = extractVideoId(part);
+        if (id) ids.push(id);
+      }
+
+      return [...new Set(ids)]; // 去重
+    }
+
+    function generateThumbnails() {
+      const rawInput = document.getElementById("inputArea").value;
+      const container = document.getElementById("thumbnails");
+      const ids = parseInput(rawInput);
+
+      if (ids.length === 0) {
+        container.innerHTML = "<p style='color:red;'>請輸入有效的影片 ID 或網址。</p>";
+        return;
+      }
+
+      const resolutions = [
+        { label: "default (320x180)", suffix: "default.jpg" },
+        { label: "mqdefault (480x360)", suffix: "mqdefault.jpg" },
+        { label: "hqdefault (640x480)", suffix: "hqdefault.jpg" },
+        { label: "sddefault (1280x720)", suffix: "sddefault.jpg" },
+        { label: "maxresdefault (最高解析度)", suffix: "maxresdefault.jpg" }
+      ];
+
+      let html = "";
+
+      ids.forEach(id => {
+        html += `<div class="thumb-box"><div class="video-title"><strong>影片 ID：</strong>${id}</div>`;
+        resolutions.forEach(res => {
+          const url = `https://i.ytimg.com/vi/${id}/${res.suffix}`;
+          html += `
+            <div>
+              <strong>${res.label}</strong><br>
+              <a href="${url}" target="_blank">${url}</a>
+              <img src="${url}" alt="${res.label}">
+            </div><br>`;
+        });
+        html += `</div>`;
+      });
+
+      container.innerHTML = html;
+    }
+  </script>
+
+</body>
+</html>
