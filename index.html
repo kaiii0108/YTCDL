@@ -2,23 +2,35 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>YouTube 縮圖產生器（支援批次、網址與解析度選擇）</title>
+  <title>YouTube 縮圖產生器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #f0f2f5;
       padding: 2rem;
-      background-color: #f4f4f4;
+      color: #333;
     }
     textarea, select {
       width: 100%;
       font-size: 1rem;
-      padding: 0.5rem;
+      padding: 0.75rem;
       margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
     button {
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1.5rem;
       font-size: 1rem;
-      margin-bottom: 1rem;
+      margin: 0.5rem 0.5rem 1rem 0;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
     }
     .thumbnail {
       margin-top: 2rem;
@@ -26,34 +38,30 @@
     .thumb-box {
       margin-bottom: 2rem;
       padding: 1rem;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     img {
-      display: block;
       max-width: 100%;
       height: auto;
       margin-top: 0.5rem;
       border: 1px solid #ccc;
     }
-    .video-title {
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-    }
     a {
-      word-break: break-all;
+      word-break: break-word;
+      color: #0645ad;
     }
   </style>
 </head>
 <body>
 
-  <h1>YouTube 縮圖預覽產生器</h1>
-  <p>請輸入 YouTube 影片 ID、網址，或用 <code>{<code>,</code>}</code> 分隔多筆：</p>
+  <h1>YouTube 縮圖產生器</h1>
+  <p>支援網址、影片 ID、多筆輸入與下載 ZIP。請輸入影片 ID 或網址（可用逗號、空白或 {} 批量）：</p>
 
-  <textarea id="inputArea" placeholder="範例：dQw4w9WgXcQ, https://youtu.be/abc12345678, {xyz111,abc222}"></textarea>
+  <textarea id="inputArea" placeholder="例如：https://youtu.be/dQw4w9WgXcQ, abc12345678, {xyz99999999,abc111}"></textarea>
 
-  <label for="resolutionSelect"><strong>選擇解析度：</strong></label>
+  <label><strong>選擇解析度：</strong></label>
   <select id="resolutionSelect">
     <option value="all">全部</option>
     <option value="default.jpg">default (320x180)</option>
@@ -63,25 +71,37 @@
     <option value="maxresdefault.jpg">maxresdefault (最高解析度)</option>
   </select>
 
-  <button onclick="generateThumbnails()">產生縮圖</button>
+  <div>
+    <button onclick="generateThumbnails()">產生縮圖</button>
+    <button onclick="downloadAll()">下載 ZIP</button>
+  </div>
 
   <div id="thumbnails" class="thumbnail"></div>
 
+  <!-- JSZip & FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
   <script>
+    const resolutions = [
+      { label: "default (320x180)", suffix: "default.jpg" },
+      { label: "mqdefault (480x360)", suffix: "mqdefault.jpg" },
+      { label: "hqdefault (640x480)", suffix: "hqdefault.jpg" },
+      { label: "sddefault (1280x720)", suffix: "sddefault.jpg" },
+      { label: "maxresdefault (最高解析度)", suffix: "maxresdefault.jpg" }
+    ];
+
     function extractVideoId(str) {
       str = str.trim();
-
       const patterns = [
         /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
         /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
         /([a-zA-Z0-9_-]{11})/
       ];
-
       for (const pattern of patterns) {
         const match = str.match(pattern);
         if (match) return match[1];
       }
-
       return null;
     }
 
@@ -89,12 +109,10 @@
       input = input.replace(/[{}]/g, '');
       const parts = input.split(/[\s,]+/).filter(Boolean);
       const ids = [];
-
       for (const part of parts) {
         const id = extractVideoId(part);
         if (id) ids.push(id);
       }
-
       return [...new Set(ids)];
     }
 
@@ -109,19 +127,10 @@
         return;
       }
 
-      const resolutions = [
-        { label: "default (320x180)", suffix: "default.jpg" },
-        { label: "mqdefault (480x360)", suffix: "mqdefault.jpg" },
-        { label: "hqdefault (640x480)", suffix: "hqdefault.jpg" },
-        { label: "sddefault (1280x720)", suffix: "sddefault.jpg" },
-        { label: "maxresdefault (最高解析度)", suffix: "maxresdefault.jpg" }
-      ];
-
       let html = "";
 
       ids.forEach(id => {
-        html += `<div class="thumb-box"><div class="video-title"><strong>影片 ID：</strong>${id}</div>`;
-
+        html += `<div class="thumb-box"><strong>影片 ID：</strong>${id}<br><br>`;
         resolutions.forEach(res => {
           if (selectedRes === "all" || selectedRes === res.suffix) {
             const url = `https://i.ytimg.com/vi/${id}/${res.suffix}`;
@@ -133,11 +142,44 @@
               </div><br>`;
           }
         });
-
         html += `</div>`;
       });
 
       container.innerHTML = html;
+    }
+
+    async function downloadAll() {
+      const rawInput = document.getElementById("inputArea").value;
+      const selectedRes = document.getElementById("resolutionSelect").value;
+      const ids = parseInput(rawInput);
+
+      if (ids.length === 0) {
+        alert("請先輸入有效的影片 ID 或網址");
+        return;
+      }
+
+      const zip = new JSZip();
+
+      for (const id of ids) {
+        for (const res of resolutions) {
+          if (selectedRes === "all" || selectedRes === res.suffix) {
+            const url = `https://i.ytimg.com/vi/${id}/${res.suffix}`;
+            try {
+              const response = await fetch(url);
+              if (response.ok) {
+                const blob = await response.blob();
+                zip.file(`${id}/${res.suffix}`, blob);
+              }
+            } catch (err) {
+              console.error(`下載失敗：${url}`, err);
+            }
+          }
+        }
+      }
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, "youtube_thumbnails.zip");
+      });
     }
   </script>
 
