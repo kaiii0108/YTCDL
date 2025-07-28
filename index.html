@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Noto Sans TC', sans-serif;
-      background-color: #f0f2f5;
+      background-color: #f7f9fb;
       padding: 2rem;
       color: #333;
     }
@@ -20,17 +20,17 @@
       border: 1px solid #ccc;
     }
     button {
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
+      padding: 0.6rem 1.2rem;
       margin: 0.5rem 0.5rem 1rem 0;
+      font-size: 1rem;
       border: none;
-      border-radius: 8px;
-      background-color: #4CAF50;
+      border-radius: 6px;
+      background-color: #2196F3;
       color: white;
       cursor: pointer;
     }
     button:hover {
-      background-color: #45a049;
+      background-color: #0b7dda;
     }
     .thumbnail {
       margin-top: 2rem;
@@ -40,7 +40,7 @@
       padding: 1rem;
       background-color: white;
       border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
     }
     img {
       max-width: 100%;
@@ -57,7 +57,7 @@
 <body>
 
   <h1>YouTube 縮圖產生器</h1>
-  <p>支援網址、影片 ID、多筆輸入與下載 ZIP。請輸入影片 ID 或網址（可用逗號、空白或 {} 批量）：</p>
+  <p>支援網址、影片 ID、多筆輸入與 ZIP 下載。請輸入影片 ID 或網址（可用逗號、空白或 {} 批次）：</p>
 
   <textarea id="inputArea" placeholder="例如：https://youtu.be/dQw4w9WgXcQ, abc12345678, {xyz99999999,abc111}"></textarea>
 
@@ -134,11 +134,14 @@
         resolutions.forEach(res => {
           if (selectedRes === "all" || selectedRes === res.suffix) {
             const url = `https://i.ytimg.com/vi/${id}/${res.suffix}`;
+            const imgId = `${id}-${res.suffix}`;
             html += `
               <div>
                 <strong>${res.label}</strong><br>
-                <a href="${url}" target="_blank">${url}</a>
-                <img src="${url}" alt="${res.label}">
+                <a href="${url}" target="_blank">${url}</a><br>
+                <img id="${imgId}" src="${url}" alt="${res.label}">
+                <br>
+                <button onclick="downloadAsPNG('${imgId}')">下載 PNG</button>
               </div><br>`;
           }
         });
@@ -180,6 +183,23 @@
       zip.generateAsync({ type: "blob" }).then(content => {
         saveAs(content, "youtube_thumbnails.zip");
       });
+    }
+
+    function downloadAsPNG(imgId) {
+      const img = document.getElementById(imgId);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(function(blob) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = imgId + ".png";
+        a.click();
+      }, "image/png");
     }
   </script>
 
