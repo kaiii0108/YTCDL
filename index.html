@@ -7,9 +7,12 @@
   <style>
     body {
       font-family: 'Noto Sans TC', sans-serif;
-      background-color: #f7f9fb;
+      background-color: #f3fef5;
       padding: 2rem;
-      color: #333;
+      color: #2d3c2e;
+    }
+    h1 {
+      color: #2e7d32;
     }
     textarea, select {
       width: 100%;
@@ -17,7 +20,8 @@
       padding: 0.75rem;
       margin-bottom: 1rem;
       border-radius: 8px;
-      border: 1px solid #ccc;
+      border: 1px solid #a5d6a7;
+      background-color: #ffffff;
     }
     button {
       padding: 0.6rem 1.2rem;
@@ -25,12 +29,12 @@
       font-size: 1rem;
       border: none;
       border-radius: 6px;
-      background-color: #2196F3;
+      background-color: #4caf50;
       color: white;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0b7dda;
+      background-color: #388e3c;
     }
     .thumbnail {
       margin-top: 2rem;
@@ -50,14 +54,14 @@
     }
     a {
       word-break: break-word;
-      color: #0645ad;
+      color: #2e7d32;
     }
   </style>
 </head>
 <body>
 
   <h1>YouTube 縮圖產生器</h1>
-  <p>支援網址、影片 ID、多筆輸入與 ZIP 下載。請輸入影片 ID 或網址（可用逗號、空白或 {} 批次）：</p>
+  <p>輸入影片網址或 ID，可用逗號、空格、{} 進行批量。</p>
 
   <textarea id="inputArea" placeholder="例如：https://youtu.be/dQw4w9WgXcQ, abc12345678, {xyz99999999,abc111}"></textarea>
 
@@ -141,7 +145,7 @@
                 <a href="${url}" target="_blank">${url}</a><br>
                 <img id="${imgId}" src="${url}" alt="${res.label}">
                 <br>
-                <button onclick="downloadAsPNG('${imgId}')">下載 PNG</button>
+                <button onclick="downloadJPG('${url}', '${imgId}.jpg')">下載 JPG</button>
               </div><br>`;
           }
         });
@@ -149,6 +153,15 @@
       });
 
       container.innerHTML = html;
+    }
+
+    function downloadJPG(url, filename) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     async function downloadAll() {
@@ -183,23 +196,6 @@
       zip.generateAsync({ type: "blob" }).then(content => {
         saveAs(content, "youtube_thumbnails.zip");
       });
-    }
-
-    function downloadAsPNG(imgId) {
-      const img = document.getElementById(imgId);
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-
-      canvas.toBlob(function(blob) {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = imgId + ".png";
-        a.click();
-      }, "image/png");
     }
   </script>
 
