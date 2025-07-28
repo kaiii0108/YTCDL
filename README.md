@@ -27,6 +27,6 @@
 2. 在輸入框中貼上：
    - YouTube 影片 ID（例如：`dQw4w9WgXcQ`）
    - YouTube 網址（如 `https://www.youtube.com/watch?v=dQw4w9WgXcQ`）
-   - 多筆 ID 或網址（可用逗號及花括號分隔{https://www.youtube.com/watch?v=dQw4w9WgXcQ,https://www.youtube.com/watch?v=dQw4w9WgXcQ}）
+   - 多筆 ID 或網址（可用逗號及花括號分隔`{https://www.youtube.com/watch?v=dQw4w9WgXcQ,https://www.youtube.com/watch?v=dQw4w9WgXcQ}`）
 3. 點擊「產生縮圖」按鈕
 4. 下方會顯示所有解析度的圖片連結與預覽圖
